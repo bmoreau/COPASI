@@ -1,7 +1,7 @@
 
 set(UI_LIBS libCOPASIUI )
 
-link_directories(${CMAKE_BINARY_DIR}/copasi)
+link_directories(${COPASI_BINARY_DIR}/copasi)
 
 set(SE_LIBS  libCOPASI)
              #copasiDM

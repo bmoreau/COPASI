@@ -186,27 +186,6 @@ size_t INVALID_INDEX();
 
 %include "CRenderInformation.i"
 
-%include <copasi/elementaryFluxModes/CFluxMode.h>
-%include <copasi/elementaryFluxModes/CEFMTask.h>
-%include <copasi/elementaryFluxModes/CEFMMethod.h>
-%include <copasi/elementaryFluxModes/CEFMProblem.h>
-
-%include <copasi/crosssection/CCrossSectionTask.h>
-%include <copasi/crosssection/CCrossSectionMethod.h>
-%include <copasi/crosssection/CCrossSectionProblem.h>
-
-%include <copasi/moieties/CMoietiesTask.h>
-%include <copasi/moieties/CMoietiesProblem.h>
-%include <copasi/moieties/CMoietiesMethod.h>
-
-%include <copasi/lna/CLNATask.h>
-%include <copasi/lna/CLNAProblem.h>
-%include <copasi/lna/CLNAMethod.h>
-
-%include <copasi/tssanalysis/CTSSATask.h>
-%include <copasi/tssanalysis/CTSSAProblem.h>
-%include <copasi/tssanalysis/CTSSAMethod.h>
-
 %{
 
 

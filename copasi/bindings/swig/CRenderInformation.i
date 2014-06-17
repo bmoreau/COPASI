@@ -144,36 +144,6 @@
 
 %}
 
-%include <copasi/layout/CLColorDefinition.h>
-%include <copasi/layout/CLGradientStop.h>
-%include <copasi/layout/CLGradientBase.h>
-%include <copasi/layout/CLLinearGradient.h>
-%include <copasi/layout/CLRadialGradient.h>
-%include <copasi/layout/CLStyle.h>
-%include <copasi/layout/CLGlobalStyle.h>
-%include <copasi/layout/CLLocalStyle.h>
-%include <copasi/layout/CLTransformation.h>
-%include <copasi/layout/CLTransformation2D.h>
-%include <copasi/layout/CLGraphicalPrimitive1D.h>
-%include <copasi/layout/CLGraphicalPrimitive2D.h>
-%include <copasi/layout/CLRelAbsVector.h>
-%include <copasi/layout/CLRenderPoint.h>
-%include <copasi/layout/CLRenderCurve.h>
-%include <copasi/layout/CLRenderCubicBezier.h>
-%include <copasi/layout/CLRectangle.h>
-%include <copasi/layout/CLEllipse.h>
-%include <copasi/layout/CLGroup.h>
-%include <copasi/layout/CLImage.h>
-%include <copasi/layout/CLPolygon.h>
-%include <copasi/layout/CLText.h>
-%include <copasi/layout/CLLineEnding.h>
-%include <copasi/layout/CLRenderInformationBase.h>
-%include <copasi/layout/CLLocalRenderInformation.h>
-%include <copasi/layout/CLGlobalRenderInformation.h>
-
-
-
-
 
 %template(ColorDefinitionVector) CCopasiVector<CLColorDefinition>;
 %template(GlobalRenderInformationVector) CCopasiVector<CLGlobalRenderInformation>;

@@ -27,6 +27,9 @@
 cmake_minimum_required (VERSION 2.8)
 project (COPASI)
 
+set( COPASI_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
+set( COPASI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR} )
+
 # preferably link against the static versions 
 # as compared to the dynamic ones
 if (NOT WIN32)
@@ -199,7 +202,7 @@ if (ENABLE_USE_MATH_CONTAINER)
   add_definitions(-DUSE_MATH_CONTAINER)
 endif(ENABLE_USE_MATH_CONTAINER)
 
-option (BUILD_GUI "Disable this if you do not want to build the COPASI GUI (CopasiUI)." ON)
+option (BUILD_GUI "Disable this if you do not want to build the COPASI GUI (CopasiUI)." OFF)
 
 find_package(OpenGL)
 
@@ -221,12 +224,12 @@ include_directories(BEFORE ${RAPTOR_INCLUDE_DIR})
 
 #TODO find libsbml, version should be 4.1 or 4.2
 # we need to make sure libsbml has the render extension
-find_package(LIBSBML REQUIRED)
+# BioPreDyn patch - Removed search for LIBSBML_LIBRARY and LIBSBML_INCLUDE_DIR
 include_directories(BEFORE ${LIBSBML_INCLUDE_DIR})
 
 # TODO find libsedml, version
 # Option for the COPASI support for SEDML 
-option (ENABLE_COPASI_SEDML "Enables SEDML support." ON)
+option (ENABLE_COPASI_SEDML "Enables SEDML support." OFF)
 mark_as_advanced(ENABLE_COPASI_SEDML)
 if(ENABLE_COPASI_SEDML)
   add_definitions(-DCOPASI_SEDML)
@@ -330,7 +333,7 @@ include(CMakeDependentOption)
 # for the language bindings we need swig
 cmake_dependent_option (ENABLE_CSHARP "Enable language bindings for the C# language." OFF "SWIG_FOUND" OFF)
 cmake_dependent_option (ENABLE_JAVA "Enable language bindings for the Java language." OFF "SWIG_FOUND" OFF)
-cmake_dependent_option (ENABLE_PYTHON "Enable language bindings for the Python language." OFF "SWIG_FOUND" OFF)
+cmake_dependent_option (ENABLE_PYTHON "Enable language bindings for the Python language." ON "SWIG_FOUND" OFF)
 cmake_dependent_option (ENABLE_PERL "Enable language bindings for the Perl language." OFF "SWIG_FOUND" OFF)
 cmake_dependent_option (ENABLE_OCTAVE "Enable language bindings for the Octave language." OFF "SWIG_FOUND" OFF)
 cmake_dependent_option (ENABLE_R "Enable language bindings for the R language." OFF "SWIG_FOUND" OFF)
@@ -351,7 +354,7 @@ endif(ENABLE_COPASI_SEDML)
 
 # if the MML widget is available, we need to enable "HAVE_MML"
 
-option(ENABLE_MML "Enable the MML widget" ON)
+option(ENABLE_MML "Enable the MML widget" OFF)
 
 if(ENABLE_MML)
 find_package(QtMmlQt4 REQUIRED)
@@ -547,8 +550,8 @@ get_directory_property(DirDefs COMPILE_DEFINITIONS)
 message(STATUS "-----------------------------------------------------------
  Building COPASI ${COPASI_VERSION_MAJOR}.${COPASI_VERSION_MINOR}.${COPASI_VERSION_BUILD} (${CMAKE_BUILD_TYPE})
 
-   Source Dir        = ${CMAKE_SOURCE_DIR}
-   Binary Dir        = ${CMAKE_BINARY_DIR}
+   Source Dir        = ${CMAKE_CURRENT_SOURCE_DIR}
+   Binary Dir        = ${CMAKE_CURRENT_BINARY_DIR}
    Install Prefix    = ${CMAKE_INSTALL_PREFIX}
 
  Dependencies:

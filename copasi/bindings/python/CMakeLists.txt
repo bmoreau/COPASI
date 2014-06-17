@@ -54,7 +54,7 @@ ADD_CUSTOM_COMMAND(
     ARGS	-I${CMAKE_CURRENT_SOURCE_DIR}/../swig/
             -I${CMAKE_CURRENT_SOURCE_DIR}/../../
             -I${CMAKE_CURRENT_SOURCE_DIR}
-			-I${CMAKE_SOURCE_DIR}
+			-I${COPASI_SOURCE_DIR}
             -c++
             -python		
             ${SWIG_EXTRA_ARGS}		 
@@ -66,7 +66,8 @@ ADD_CUSTOM_COMMAND(
             ${SWIG_DEPENDENCIES}
     COMMENT "Swig Python source") 
 
-add_custom_target(binding_python_swig ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/python.i)
+# BioPreDyn patch - Change target name
+add_custom_target(copasi_binding_python_swig ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/python.i)
 
 	
 ####################################################################
@@ -83,7 +84,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../swig)
-include_directories(${CMAKE_SOURCE_DIR}/src)
+include_directories(${COPASI_SOURCE_DIR}/copasi)
 include_directories(${PYTHON_INCLUDE_DIRS})
 
 if (WIN32)
@@ -94,37 +95,26 @@ if (MSVC OR USING_INTEL)
 endif(MSVC OR USING_INTEL)
 endif(WIN32)
 
-add_library(binding_python_lib SHARED copasi_wrapper.cpp)
-add_dependencies( binding_python_lib binding_python_swig) 
+add_library(copasi_binding_python_lib SHARED copasi_wrapper.cpp)
+add_dependencies( copasi_binding_python_lib copasi_binding_python_swig) 
 
-set_target_properties (binding_python_lib PROPERTIES OUTPUT_NAME "_COPASI")
+set_target_properties (copasi_binding_python_lib PROPERTIES OUTPUT_NAME "_COPASI")
 if (UNIX)
-	set_target_properties (binding_python_lib PROPERTIES PREFIX "")
-	set_target_properties (binding_python_lib PROPERTIES SUFFIX ".so")
+	set_target_properties (copasi_binding_python_lib PROPERTIES PREFIX "")
+	set_target_properties (copasi_binding_python_lib PROPERTIES SUFFIX ".so")
 else()		
 	if (CYGWIN)
-		set_target_properties (binding_python_lib PROPERTIES PREFIX "")
-		set_target_properties (binding_python_lib PROPERTIES SUFFIX ".dll")
+		set_target_properties (copasi_binding_python_lib PROPERTIES PREFIX "")
+		set_target_properties (copasi_binding_python_lib PROPERTIES SUFFIX ".dll")
 	else()
-		set_target_properties (binding_python_lib PROPERTIES SUFFIX ".pyd")	
+		set_target_properties (copasi_binding_python_lib PROPERTIES SUFFIX ".pyd")	
 	endif()
 endif()
 
-target_link_libraries(binding_python_lib ${SE_EXTERNAL_LIBS} ${SE_LIBS}  ${PYTHON_LIBRARIES})
+target_link_libraries(copasi_binding_python_lib sbml_binding_python_lib ${SE_EXTERNAL_LIBS} ${SE_LIBS}  ${PYTHON_LIBRARIES})
 
-# 
-# Determine the python installation directory
-#
-set(PYTHON_PACKAGE_INSTALL_DIR)
-if (UNIX OR CYGWIN) 
-  execute_process(COMMAND "${PYTHON_EXECUTABLE}" -c "import sys;import platform; sys.stdout.write(platform.python_version()[:3])"
-    OUTPUT_VARIABLE PYTHON_VERSION)
-  set(PYTHON_PACKAGE_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR}/python${PYTHON_VERSION}/site-packages)
-else()
-  set(PYTHON_PACKAGE_INSTALL_DIR ${MISC_PREFIX}bindings/python)
-endif()
-
-INSTALL(TARGETS binding_python_lib DESTINATION ${PYTHON_PACKAGE_INSTALL_DIR}/copasi )
+# BioPreDyn patch - Remove Python installation package definition
+INSTALL(TARGETS copasi_binding_python_lib DESTINATION ${PYTHON_PACKAGE_INSTALL_DIR}/copasi )
 
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/copasi.pth" "copasi\n")
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/copasi.pth  DESTINATION ${PYTHON_PACKAGE_INSTALL_DIR})

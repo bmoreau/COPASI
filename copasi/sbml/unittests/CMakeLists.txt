@@ -27,8 +27,8 @@ cmake_minimum_required (VERSION 2.6)
 project (sbml-unittests)
 
 include_directories(
-	${CMAKE_SOURCE_DIR}
-	${CMAKE_SOURCE_DIR}/copasi
+	${COPASI_SOURCE_DIR}
+	${COPASI_SOURCE_DIR}/copasi
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CPPUNIT_INCLUDE_DIR}
 )

@@ -33,10 +33,10 @@ include (common.cmake)
 
 execute_process(
 	COMMAND "${CMAKE_COMMAND}"
-	ARGS -DSRC_DIRECTORY=\"${CMAKE_SOURCE_DIR}\"
-		 -P "${CMAKE_SOURCE_DIR}/delete-qmake-files.cmake"
+	ARGS -DSRC_DIRECTORY=\"${COPASI_SOURCE_DIR}\"
+		 -P "${COPASI_SOURCE_DIR}/delete-qmake-files.cmake"
 
-	WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+	WORKING_DIRECTORY "${COPASI_SOURCE_DIR}"
 	)
 
 set(COPASI_SOURCES)
@@ -127,7 +127,7 @@ if(BUILD_CXX_EXAMPLES OR ENABLE_CSHARP OR ENABLE_JAVA OR ENABLE_PYTHON OR ENABLE
   add_subdirectory(bindings)
 endif (BUILD_CXX_EXAMPLES OR ENABLE_CSHARP OR ENABLE_JAVA OR ENABLE_PYTHON OR ENABLE_OCTAVE OR ENABLE_PERL OR ENABLE_R)
 
-option(BUILD_SE "Build the commandline executable for COPASI (CopasiSE)." ON)
+option(BUILD_SE "Build the commandline executable for COPASI (CopasiSE)." OFF)
 mark_as_advanced(BUILD_SE)
 
 if(BUILD_SE)
@@ -239,7 +239,7 @@ endforeach()
 
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-include_directories(${CMAKE_BINARY_DIR})
+include_directories(${COPASI_BINARY_DIR})
 include_directories(${LIBSBML_INCLUDE_DIR})
 include_directories(${QWT_INCLUDE_DIR})
 include_directories(${QWTPLOT3D_INCLUDE_DIR})
