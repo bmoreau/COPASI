@@ -27,5 +27,10 @@
 
 %include "parameterFitting/CFitProblem.h"
 
-
-
+%extend CFitProblem {
+  CMatrix<C_FLOAT64>* CFitProblem::getFisher() const
+  {
+    CMatrix<C_FLOAT64>* FisherCopy = new  CMatrix< C_FLOAT64 > (self->mFisher);
+    return (FisherCopy);
+  }
+};

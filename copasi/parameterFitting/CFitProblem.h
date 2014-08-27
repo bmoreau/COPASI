@@ -267,6 +267,11 @@ public:
    */
   const bool & getCreateParameterSets() const;
 
+  /**
+   * The Fisher information or parameter correlation matrix
+   */
+  CMatrix< C_FLOAT64 > mFisher;
+
 private:
   /**
    * Allocates all group parameters and assures that they are
@@ -445,7 +450,6 @@ private:
   /**
    * The Fisher information or parameter correlation matrix
    */
-  CMatrix< C_FLOAT64 > mFisher;
   CCopasiMatrixInterface< CMatrix< C_FLOAT64 > > * mpFisherMatrixInterface;
   CArrayAnnotation * mpFisherMatrix;
 
