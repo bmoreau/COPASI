@@ -31,28 +31,6 @@ if (BUILD_CXX_EXAMPLES)
   add_subdirectory(cpp_examples)
 endif (BUILD_CXX_EXAMPLES)
 
-if (ENABLE_CSHARP)
-  add_subdirectory(csharp)
-endif (ENABLE_CSHARP)
-
-if (ENABLE_JAVA)
-  add_subdirectory(java)
-endif (ENABLE_JAVA)
-
 if (ENABLE_PYTHON)
   add_subdirectory(python)
 endif (ENABLE_PYTHON)
-
-if (ENABLE_PERL)
-  add_subdirectory(perl)
-endif (ENABLE_PERL)
-
-if (ENABLE_OCTAVE)
-  add_subdirectory(octave)
-endif (ENABLE_OCTAVE)
-
-if (ENABLE_R)
-  add_subdirectory(R)
-endif (ENABLE_R)
-
-

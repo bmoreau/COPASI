@@ -28,7 +28,6 @@ include(${SWIG_USE_FILE})
 include(FindPythonLibs)
 include(FindPythonInterp)
 
-
 ####################################################################
 #
 # ensure that LAPACK variables are there for swig
@@ -49,25 +48,25 @@ endif()
 
 
 ADD_CUSTOM_COMMAND(	
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/copasi_wrapper.cpp
+    OUTPUT ${COPASI_BINARY_DIR}/copasi/bindings/python/copasi_wrapper.cpp
     COMMAND "${SWIG_EXECUTABLE}"
-    ARGS	-I${CMAKE_CURRENT_SOURCE_DIR}/../swig/
-            -I${CMAKE_CURRENT_SOURCE_DIR}/../../
-            -I${CMAKE_CURRENT_SOURCE_DIR}
+    ARGS	-I${COPASI_SOURCE_DIR}/copasi/bindings/swig/
+            -I${COPASI_SOURCE_DIR}/copasi
+            -I${COPASI_SOURCE_DIR}/copasi/bindings/python
 			-I${COPASI_SOURCE_DIR}
             -c++
             -python		
             ${SWIG_EXTRA_ARGS}		 
-            -o ${CMAKE_CURRENT_BINARY_DIR}/copasi_wrapper.cpp 
-            ${CMAKE_CURRENT_SOURCE_DIR}/python.i
+            -o ${COPASI_BINARY_DIR}/copasi/bindings/python/copasi_wrapper.cpp 
+            ${COPASI_SOURCE_DIR}/copasi/bindings/python/python.i
 
-    MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/python.i
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    MAIN_DEPENDENCY ${COPASI_SOURCE_DIR}/copasi/bindings/python/python.i
+    DEPENDS ${COPASI_SOURCE_DIR}/copasi/bindings/python/CMakeLists.txt
             ${SWIG_DEPENDENCIES}
     COMMENT "Swig Python source") 
 
 # BioPreDyn patch - Change target name
-add_custom_target(copasi_binding_python_swig ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/python.i)
+add_custom_target(copasi_binding_python_swig ALL DEPENDS ${COPASI_SOURCE_DIR}/copasi/bindings/python/python.i)
 
 	
 ####################################################################
@@ -79,12 +78,10 @@ add_custom_target(copasi_binding_python_swig ALL DEPENDS ${CMAKE_CURRENT_SOURCE_
 include(../../common.cmake)
 include(../../CMakeConsoleApp.cmake)
 
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../..)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../swig)
+include_directories(${COPASI_SOURCE_DIR}/copasi/bindings/python)
 include_directories(${COPASI_SOURCE_DIR}/copasi)
+include_directories(${COPASI_SOURCE_DIR}/copasi/bindings/swig)
+include_directories(${COPASI_SOURCE_DIR})
 include_directories(${PYTHON_INCLUDE_DIRS})
 
 if (WIN32)
@@ -116,8 +113,8 @@ target_link_libraries(copasi_binding_python_lib sbml_binding_python_lib ${SE_EXT
 # BioPreDyn patch - Remove Python installation package definition
 INSTALL(TARGETS copasi_binding_python_lib DESTINATION ${PYTHON_PACKAGE_INSTALL_DIR}/copasi )
 
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/copasi.pth" "copasi\n")
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/copasi.pth  DESTINATION ${PYTHON_PACKAGE_INSTALL_DIR})
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/COPASI.py  DESTINATION ${PYTHON_PACKAGE_INSTALL_DIR}/copasi )
-file(GLOB examples ${CMAKE_CURRENT_SOURCE_DIR}/examples/*.py)
+file(WRITE "${COPASI_BINARY_DIR}/copasi/bindings/python/copasi.pth" "copasi\n")
+INSTALL(FILES ${COPASI_BINARY_DIR}/copasi/bindings/python/copasi.pth  DESTINATION ${PYTHON_PACKAGE_INSTALL_DIR})
+INSTALL(FILES ${COPASI_BINARY_DIR}/copasi/bindings/python/COPASI.py  DESTINATION ${PYTHON_PACKAGE_INSTALL_DIR}/copasi )
+file(GLOB examples ${COPASI_SOURCE_DIR}/copasi/copasi/bindings/python/examples/*.py)
 INSTALL(FILES ${examples} DESTINATION ${MISC_PREFIX}bindings/python) 

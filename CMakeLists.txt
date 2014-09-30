@@ -27,8 +27,8 @@
 cmake_minimum_required (VERSION 2.8)
 project (COPASI)
 
-set( COPASI_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
-set( COPASI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR} )
+set( COPASI_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE PATH "" FORCE )
+set( COPASI_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}" CACHE PATH "" FORCE )
 
 # preferably link against the static versions 
 # as compared to the dynamic ones
@@ -465,7 +465,7 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "COPASI is a software application for simu
 set(CPACK_PACKAGE_NAME "COPASI")
 set(CPACK_PACKAGE_VENDOR "copasi.org")
 set(CPACK_PACKAGE_CONTACT "COPASI Support <support@copasi.org>")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/copasi/ArtisticLicense.txt")
+set(CPACK_RESOURCE_FILE_LICENSE "${COPASI_SOURCE_DIR}/copasi/ArtisticLicense.txt")
 set(CPACK_PACKAGE_VERSION_MAJOR "${COPASI_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR "${COPASI_VERSION_MINOR}")
 set(CPACK_PACKAGE_VERSION_PATCH "${COPASI_VERSION_BUILD}")
@@ -488,7 +488,7 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     endif ()     
 endif ()
 
-set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR};/.git/;/.svn/;/.libs/;/.deps/;/.bzr/;.*.o$;.*.lo$;.*.la$;${CPACK_SOURCE_IGNORE_FILES};/.DS_Store;/.svnignore;blib;libsbml-dist;/gps/")
+set(CPACK_SOURCE_IGNORE_FILES "${COPASI_BINARY_DIR};/.git/;/.svn/;/.libs/;/.deps/;/.bzr/;.*.o$;.*.lo$;.*.la$;${CPACK_SOURCE_IGNORE_FILES};/.DS_Store;/.svnignore;blib;libsbml-dist;/gps/")
 
 if(UNIX)
     set(CPACK_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
@@ -504,7 +504,6 @@ else()
 endif()
 
 include(CPack)
-
 add_subdirectory(copasi)
 
 if(BUILD_SEMANTIC_TESTSUITE)
@@ -550,8 +549,8 @@ get_directory_property(DirDefs COMPILE_DEFINITIONS)
 message(STATUS "-----------------------------------------------------------
  Building COPASI ${COPASI_VERSION_MAJOR}.${COPASI_VERSION_MINOR}.${COPASI_VERSION_BUILD} (${CMAKE_BUILD_TYPE})
 
-   Source Dir        = ${CMAKE_CURRENT_SOURCE_DIR}
-   Binary Dir        = ${CMAKE_CURRENT_BINARY_DIR}
+   Source Dir        = ${COPASI_SOURCE_DIR}
+   Binary Dir        = ${COPASI_BINARY_DIR}
    Install Prefix    = ${CMAKE_INSTALL_PREFIX}
 
  Dependencies:

@@ -22,11 +22,8 @@
 # All rights reserved.
 #
 ###############################################################################
-
 cmake_minimum_required (VERSION 2.6)
 
-
-project (COPASI)
 cmake_policy(SET CMP0011 NEW)
 
 include (common.cmake)
@@ -41,10 +38,9 @@ execute_process(
 
 set(COPASI_SOURCES)
 set(COPASI_HEADERS)
-
-if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/CopasiVersion.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CopasiVersion.h.in ${CMAKE_CURRENT_SOURCE_DIR}/CopasiVersion.h)
-endif (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/CopasiVersion.h)
+if (NOT EXISTS ${COPASI_SOURCE_DIR}/copasi/CopasiVersion.h)
+configure_file(${COPASI_SOURCE_DIR}/copasi/CopasiVersion.h.in ${COPASI_SOURCE_DIR}/copasi/CopasiVersion.h)
+endif (NOT EXISTS ${COPASI_SOURCE_DIR}/copasi/CopasiVersion.h)
 
 include(CopasiDataModel/CMakeLists.txt)
 include(MIRIAM/CMakeLists.txt)
@@ -84,8 +80,8 @@ endif()
 
 
 include_directories(
-  "${CMAKE_CURRENT_SOURCE_DIR}"
-  "${CMAKE_CURRENT_SOURCE_DIR}/.."
+  "${COPASI_SOURCE_DIR}/copasi"
+  "${COPASI_SOURCE_DIR}"
   ${RAPTOR_INCLUDE_DIR}
   ${LIBEXPAT_INCLUDE_DIR}
   ${LAPACK_INCLUDE_DIR}
@@ -200,7 +196,7 @@ MACRO (COPASI_QT4_WRAP_UI outfiles subdir )
   FOREACH (it ${ui_files})
     GET_FILENAME_COMPONENT(outfile ${it} NAME_WE)
     GET_FILENAME_COMPONENT(infile ${it} ABSOLUTE)
-    SET(outfile ${CMAKE_CURRENT_BINARY_DIR}/${subdir}/ui_${outfile}.h) # Here we set output
+    SET(outfile ${COPASI_BINARY_DIR}/copasi/${subdir}/ui_${outfile}.h) # Here we set output
     ADD_CUSTOM_COMMAND(OUTPUT ${outfile}
       COMMAND ${QT_UIC_EXECUTABLE}
       ARGS ${ui_options} -o ${outfile} ${infile}
@@ -233,12 +229,12 @@ foreach (dir
   endif()
 
   set(HEADERS_UI_FORMS ${HEADERS_UI_FORMS} ${TEMP_UI_FORMS})
-  include_directories(${CMAKE_CURRENT_BINARY_DIR}/${dir})
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/${dir})
+  include_directories(${COPASI_BINARY_DIR}/copasi/${dir})
+  include_directories(${COPASI_SOURCE_DIR}/copasi/${dir})
 endforeach()
 
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${COPASI_BINARY_DIR}/copasi)
 include_directories(${COPASI_BINARY_DIR})
 include_directories(${LIBSBML_INCLUDE_DIR})
 include_directories(${QWT_INCLUDE_DIR})
