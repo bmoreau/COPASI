@@ -27,31 +27,8 @@ include(../common.pri)
 
 SUBDIRS += cpp_examples
 
-contains(ENABLE_JAVA,yes){
-  SUBDIRS += java
-  !isEmpty(JUNIT_PATH){
-    SUBDIRS += java/unittests
-  }
-}
-
 contains(ENABLE_PYTHON,yes){
   SUBDIRS += python
-}
-
-contains(ENABLE_OCTAVE,yes){
- SUBDIRS += octave
-}
-
-contains(ENABLE_R,yes){
- SUBDIRS += R
-}
-
-contains(ENABLE_PERL,yes){
- SUBDIRS += perl
-}
-
-contains(ENABLE_CSHARP,yes){
- SUBDIRS += csharp
 }
 
 
