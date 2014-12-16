@@ -40,7 +40,7 @@ const char * CUnit::QuantityUnitNames[] =
 CUnit::CUnit(const std::string & name,
              const CCopasiContainer * pParent):
   CCopasiContainer(name, pParent, "Unit"),
-  mSymbol(),
+  mSymbol("none"),
   mKey(),
   mComponents()
 {
@@ -63,12 +63,16 @@ CUnit::~CUnit()
   CCopasiRootContainer::getKeyFactory()->remove(mKey);
 }
 
+void CUnit::setup()
+{
+  mKey = CCopasiRootContainer::getKeyFactory()->add("Unit", this);
+}
+
 void CUnit::fromEnum(VolumeUnit volEnum)
 {
   mComponents.clear();
 
   mSymbol = VolumeUnitNames[volEnum];
-  // setup();
 
   if( volEnum == CUnit::dimensionlessVolume )
     return; // no need to add component
@@ -115,7 +119,6 @@ void CUnit::fromEnum(AreaUnit areaEnum)
   mComponents.clear();
 
   mSymbol = AreaUnitNames[areaEnum];
-  setup();
 
   if( areaEnum == CUnit::dimensionlessArea )
     return; // no need to add component
@@ -166,7 +169,6 @@ void CUnit::fromEnum(LengthUnit lengthEnum)
   mComponents.clear();
 
   mSymbol = LengthUnitNames[lengthEnum];
-  setup();
 
   if( lengthEnum == CUnit::dimensionlessLength )
     return; // no need to add component
@@ -216,7 +218,6 @@ void CUnit::fromEnum(TimeUnit timeEnum)
   mComponents.clear();
 
   mSymbol = TimeUnitNames[timeEnum];
-  setup();
 
   if( timeEnum == CUnit::dimensionlessTime )
     return; // no need to add component
@@ -266,7 +267,6 @@ void CUnit::fromEnum(QuantityUnit quantityEnum)
   mComponents.clear();
 
   mSymbol = QuantityUnitNames[quantityEnum];
-  setup();
 
   if( quantityEnum == CUnit::dimensionlessQuantity )
     return; // no need to add component
@@ -318,12 +318,6 @@ void CUnit::fromEnum(QuantityUnit quantityEnum)
   }
 
   addComponent(tmpComponent);
-}
-
-void CUnit::setup()
-{
-  mKey = CCopasiRootContainer::getKeyFactory()->add("Unit", this);
-  setSymbol("tmp");
 }
 
 void CUnit::setSymbol(std::string symbol)
@@ -379,25 +373,65 @@ bool CUnit::simplifyComponents()
   std::sort(mComponents.begin(), mComponents.end()); // make same Kinds adjacent
 
   for (; it != mComponents.end(); it++)
-    {
-      tempComponent = (*it);
+  {
+    tempComponent = (*it);
 
-      while (it != mComponents.end() && tempComponent.getKind() == (*(it + 1)).getKind())
-        {
-          tempComponent.setExponent((tempComponent.getExponent()) + (*(it + 1)).getExponent());
-          tempComponent.setScale(tempComponent.getScale() + (*(it + 1)).getScale());
-          tempComponent.setMultiplier(tempComponent.getMultiplier() * (*(it + 1)).getMultiplier());
-          didSimplify = true;
-          it++;
-        }
+    while (it != mComponents.end() && tempComponent.getKind() == (*(it + 1)).getKind())
+    {
+      tempComponent.setExponent((tempComponent.getExponent()) + (*(it + 1)).getExponent());
+      tempComponent.setScale(tempComponent.getScale() + (*(it + 1)).getScale());
+      tempComponent.setMultiplier(tempComponent.getMultiplier() * (*(it + 1)).getMultiplier());
+      didSimplify = true;
+      it++;
+    }
 
       replacementVector.push_back(tempComponent);
-    }
+  }
 
   if (didSimplify)
-    {
-      mComponents = replacementVector;
-    }
+  {
+    mComponents = replacementVector;
+  }
 
   return didSimplify;
 }
+
+std::string CUnit::prefixFromScale(int scale)
+{
+  switch (scale)
+  {
+    case 3:
+      return "k";  // kilo
+
+    case 2:
+      return "h";  // hecto
+
+    case 1:
+      return "da"; // deca
+
+    case -1:
+      return "d";  // deci
+
+    case -2:
+      return "c";  // centi
+
+    case -3:
+      return "m";  // milli
+
+    case -6:
+      return "\xc2\xb5";  // micro
+
+    case -9:
+      return "n";  // nano
+
+    case -12:
+      return "p";  // pico
+
+    case -15:
+      return "f";  // femto
+
+    default:
+      return "";  // anything else, including scale = 0
+  }
+}
+

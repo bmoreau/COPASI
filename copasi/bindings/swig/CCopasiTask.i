@@ -1,4 +1,4 @@
-// Copyright (C) 2010 - 2013 by Pedro Mendes, Virginia Tech Intellectual 
+// Copyright (C) 2010 - 2014 by Pedro Mendes, Virginia Tech Intellectual 
 // Properties, Inc., University of Heidelberg, and The University 
 // of Manchester. 
 // All rights reserved. 
@@ -11,6 +11,16 @@
 // Copyright (C) 2006 - 2007 by Pedro Mendes, Virginia Tech Intellectual 
 // Properties, Inc. and EML Research, gGmbH. 
 // All rights reserved. 
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -34,7 +44,9 @@
 %ignore CCopasiTask::getCallBack;
 %ignore CCopasiTask::setCallBack;
 %ignore CCopasiTask::isValidMethod;
-%ignore CCopasiTask::initialize;
+%ignore CCopasiTask::initialize(const OutputFlag & of,
+                          COutputHandler * pOutputHandler,
+                          std::ostream * pOstream);
 
 #if (defined SWIGJAVA || defined SWIGCSHARP)
 // remove some const methods to get rid of warnings
@@ -102,15 +114,43 @@
 
     std::string getProcessError()
     {
-	return self->Error;
+      return self->Error;
     }
     
     std::string getProcessWarning()
     {
-	return self->Warning;
+      return self->Warning;
     }
   
- 
+
+    bool initialize(int outputFlags)
+    {
+         bool success = true;
+        CCopasiMessage::clearDeque();
+        self->Warning = "";
+        self->Error = "";
+        CCopasiDataModel* pDataModel=self->getObjectDataModel();
+        // Initialize the task
+        try
+        {
+          if (!self->initialize((CCopasiTask::OutputFlag)outputFlags, pDataModel, NULL))
+          {
+            throw CCopasiException(CCopasiMessage::peekLastMessage());
+          }
+        }
+
+        catch (CCopasiException &)
+        {
+          if (CCopasiMessage::peekLastMessage().getNumber() != MCCopasiMessage + 1)
+          {
+            self->Error = CCopasiMessage::getAllMessageText();
+            success = false;
+            
+          }
+        }
+        return success;
+    }
+  
     bool processWithOutputFlags(bool useInitialValues, int outputFlags) 
       {
         bool success = true;
@@ -131,23 +171,29 @@
           }
         }
 
-        catch (CCopasiException & Exception)
+        catch (CCopasiException &)
         {
           if (CCopasiMessage::peekLastMessage().getNumber() != MCCopasiMessage + 1)
           {
             self->Error = CCopasiMessage::getAllMessageText();
-			success = false;
-			
-			goto restore;
+            success = false;
+            
+            goto restore;
           }
         }
 
         if (CCopasiMessage::getHighestSeverity() >= CCopasiMessage::COMMANDLINE)
         {
           self->Error = CCopasiMessage::getAllMessageText();
-          success = false;
-			
-		  goto restore;
+          success = true;
+          if (
+          CCopasiMessage::getHighestSeverity() == CCopasiMessage::ERROR ||
+          CCopasiMessage::getHighestSeverity() == CCopasiMessage::EXCEPTION)
+          {
+            success = false;
+            
+            goto restore;
+          }
         }
 
         CCopasiMessage::clearDeque();
@@ -157,7 +203,7 @@
           success = self->process(useInitialValues);
         }
         
-        catch (CCopasiException & Exception)
+        catch (CCopasiException &)
         {
           success = false;
         }
@@ -182,7 +228,7 @@
           self->restore();
         }
 
-        catch (CCopasiException & Exception)
+        catch (CCopasiException &)
         {
           if (CCopasiMessage::peekLastMessage().getNumber() != MCCopasiMessage + 1)
           { 
@@ -194,7 +240,7 @@
 
         if (CCopasiMessage::getHighestSeverity() >= CCopasiMessage::COMMANDLINE)
         {
-		  self->Warning = CCopasiMessage::getAllMessageText();
+          self->Warning = CCopasiMessage::getAllMessageText();
         }
 
         CCopasiMessage::clearDeque();
@@ -206,7 +252,7 @@
      
     virtual bool process(bool useInitialValues) 
       {
-	bool success = true;
+        bool success = true;
         
         CCopasiMessage::clearDeque();
         CCopasiDataModel* pDataModel=self->getObjectDataModel();
@@ -224,23 +270,29 @@
           }
         }
 
-        catch (CCopasiException & Exception)
+        catch (CCopasiException &)
         {
           if (CCopasiMessage::peekLastMessage().getNumber() != MCCopasiMessage + 1)
           {
             self->Error = CCopasiMessage::getAllMessageText();
-			success = false;
-			
-			goto restore;
+            success = false;
+            
+            goto restore;
           }
         }
 
         if (CCopasiMessage::getHighestSeverity() >= CCopasiMessage::COMMANDLINE)
         {
           self->Error = CCopasiMessage::getAllMessageText();
-          success = false;
-			
-		  goto restore;
+          success = true;
+          if (
+          CCopasiMessage::getHighestSeverity() == CCopasiMessage::ERROR ||
+          CCopasiMessage::getHighestSeverity() == CCopasiMessage::EXCEPTION)
+          {
+            success = false;
+            
+            goto restore;
+          }
         }
 
         CCopasiMessage::clearDeque();
@@ -250,7 +302,7 @@
           success = self->process(useInitialValues);
         }
         
-        catch (CCopasiException & Exception)
+        catch (CCopasiException &)
         {
           success = false;
         }
@@ -275,7 +327,7 @@
           self->restore();
         }
 
-        catch (CCopasiException & Exception)
+        catch (CCopasiException &)
         {
           if (CCopasiMessage::peekLastMessage().getNumber() != MCCopasiMessage + 1)
           { 
@@ -287,7 +339,7 @@
 
         if (CCopasiMessage::getHighestSeverity() >= CCopasiMessage::COMMANDLINE)
         {
-		  self->Warning = CCopasiMessage::getAllMessageText();
+          self->Warning = CCopasiMessage::getAllMessageText();
         }
 
         CCopasiMessage::clearDeque();

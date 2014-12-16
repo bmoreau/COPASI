@@ -1,4 +1,4 @@
-// Copyright (C) 2010 - 2013 by Pedro Mendes, Virginia Tech Intellectual 
+// Copyright (C) 2010 - 2014 by Pedro Mendes, Virginia Tech Intellectual 
 // Properties, Inc., University of Heidelberg, and The University 
 // of Manchester. 
 // All rights reserved. 
@@ -11,6 +11,16 @@
 // Copyright (C) 2006 - 2007 by Pedro Mendes, Virginia Tech Intellectual 
 // Properties, Inc. and EML Research, gGmbH. 
 // All rights reserved. 
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -41,6 +51,8 @@
 
 %ignore CCopasiDataModel::CCopasiDataModel(const bool);
 %ignore CCopasiDataModel::autoSave();
+%ignore CCopasiDataModel::mLastAddedObjects;
+%ignore CCopasiDataModel::pOldMetabolites;
 %ignore CCopasiDataModel::print;
 %ignore CCopasiDataModel::loadModel(const std::string& fileName,CProcessReport* pProcessReport,
                  const bool & deleteOldData = true);
@@ -122,31 +134,32 @@
 
 %extend CCopasiDataModel
 {
-	bool importSBMLFromString(const std::string& content)
-	{
-	try
-	{
-		return self->importSBMLFromString(content, NULL);
-	}
-	catch(...)
-	{
-	return false;
-	}
-	}
-    bool loadModelFromString(const std::string& content, const std::string& path)
-	{
-		try
-		{
-		  std::istringstream is(content);
-		  return $self->loadModel(is,
+  bool importSBMLFromString(const std::string& content)
+  {
+    try
+    {
+      return self->importSBMLFromString(content, NULL);
+    }
+    catch(...)
+    {
+      return false;
+    }
+  }
+
+  bool loadModelFromString(const std::string& content, const std::string& path)
+  {
+    try
+    {
+      std::istringstream is(content);
+      return $self->loadModel(is,
                  path,
                  NULL);
-		}
-		catch(...)
-		{
-		return false;
-		}
-	}
+    }
+    catch(...)
+    {
+      return false;
+    }
+  }
     bool loadModel(const std::string& fileName)
     {
         return $self->loadModel(fileName,NULL);
@@ -172,11 +185,11 @@
     {
         try
         {
-	return $self->exportMathModelToString(NULL,filter);
+          return $self->exportMathModelToString(NULL,filter);
         }
         catch (...)
         {
-	return "";
+          return "";
         }
     }
 
@@ -185,15 +198,67 @@
         return $self->newModel(NULL,false);
     }
 
+    unsigned C_INT32 getNumReportDefinitions()
+    {
+     return (unsigned C_INT32) self->getReportDefinitionList()->size();
+    }
+    
+    bool removeReportDefinition(unsigned C_INT32 index)
+    {
+      CCopasiVector< CReportDefinition > * pReportList = self->getReportDefinitionList();
+      CReportDefinition * pReport = (*pReportList)[index];
+
+      if (pReport == NULL)
+        return false;
+
+
+      std::set< const CCopasiObject * > Tasks;
+      std::set< const CCopasiObject * > DeletedObjects;
+      DeletedObjects.insert(pReport);
+
+      if (self->appendDependentTasks(DeletedObjects, Tasks))
+        {
+          std::set< const CCopasiObject * >::iterator it = Tasks.begin();
+          std::set< const CCopasiObject * >::iterator end = Tasks.end();
+
+          for (; it != end; ++it)
+            {
+              const CCopasiTask * pTask = static_cast< const CCopasiTask *>(*it);
+              const_cast< CCopasiTask * >(pTask)->getReport().setReportDefinition(NULL);
+            }
+        }
+
+      pReportList->remove(pReport);
+      return true;
+    }
+    
+    bool removePlotSpecification(unsigned C_INT32 index)
+    {
+      CCopasiVector< CPlotSpecification > * pPlotList = self->getPlotDefinitionList();
+
+      CPlotSpecification * pPlot = (*pPlotList)[index];
+
+      if (pPlot == NULL)
+        return false;
+
+      pPlotList->remove(pPlot);
+      return true;
+    }
+    
+    unsigned C_INT32 getNumPlotSpecifications()
+    {
+     return (unsigned C_INT32) self->getPlotDefinitionList()->size();
+    }
+    
     CReportDefinition* getReportDefinition(unsigned C_INT32 index)
     {
-	try
-	{
-      return (*$self->getReportDefinitionList())[index];
-	  }
+      try
+      {
+        return (*$self->getReportDefinitionList())[index];
+      }
       catch(...)
       {
-	return NULL;
+        return NULL;
       }
     }
 
@@ -201,23 +266,23 @@
     {
       try
       {
-      return (*$self->getReportDefinitionList())[name];
+        return (*$self->getReportDefinitionList())[name];
       }
       catch(...)
       {
-	return NULL;
+        return NULL;
       }
     }
     
     CPlotSpecification* getPlotSpecification(unsigned C_INT32 index)
     {
-	try
-	{
-      return (*$self->getPlotDefinitionList())[index];
-	  }
+      try
+      {
+        return (*$self->getPlotDefinitionList())[index];
+      }
       catch(...)
       {
-	return NULL;
+        return NULL;
       }
     }
 
@@ -225,23 +290,28 @@
     {
       try
       {
-      return (*$self->getPlotDefinitionList())[name];
+        return (*$self->getPlotDefinitionList())[name];
       }
       catch(...)
       {
-	return NULL;
+        return NULL;
       }
     }
 
+    unsigned C_INT32 getNumTasks()
+    {
+     return (unsigned C_INT32) self->getTaskList()->size();
+    } 
+    
     CCopasiTask* getTask(unsigned C_INT32 index)
     {
-	try
-	{	
-      return (*$self->getTaskList())[index];
-	  }
+      try
+      {
+        return (*$self->getTaskList())[index];
+      }
       catch(...)
       {
-	return NULL;
+        return NULL;
       }
     }
 
@@ -249,11 +319,11 @@
     {
       try
       {
-	return (*$self->getTaskList())[name];
+         return (*$self->getTaskList())[name];
       }
       catch(...)
       {
-	return NULL;
+         return NULL;
       }
     }
 

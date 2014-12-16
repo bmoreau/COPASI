@@ -1,12 +1,12 @@
-// Copyright (C) 2010 - 2013 by Pedro Mendes, Virginia Tech Intellectual 
-// Properties, Inc., University of Heidelberg, and The University 
-// of Manchester. 
-// All rights reserved. 
+// Copyright (C) 2010 - 2014 by Pedro Mendes, Virginia Tech Intellectual
+// Properties, Inc., University of Heidelberg, and The University
+// of Manchester.
+// All rights reserved.
 
-// Copyright (C) 2009 by Pedro Mendes, Virginia Tech Intellectual 
-// Properties, Inc., EML Research, gGmbH, University of Heidelberg, 
-// and The University of Manchester. 
-// All rights reserved. 
+// Copyright (C) 2009 by Pedro Mendes, Virginia Tech Intellectual
+// Properties, Inc., EML Research, gGmbH, University of Heidelberg,
+// and The University of Manchester.
+// All rights reserved.
 
 #include "CQSpeciesDetail.h"
 #include "CQMessageBox.h"
@@ -17,6 +17,21 @@
 #include "model/CChemEqInterface.h"
 #include "report/CCopasiRootContainer.h"
 #include "model/CModelExpansion.h"    //for Copy button and options
+
+//UNDO framework classes
+#ifdef COPASI_UNDO
+#include "model/CReactionInterface.h"
+#include "undoFramework/DeleteSpecieCommand.h"
+#include "undoFramework/CreateNewSpecieCommand.h"
+#include "undoFramework/SpecieTypeChangeCommand.h"
+#include "undoFramework/SpecieInitialValueLostFocusCommand.h"
+#include "undoFramework/UndoSpecieData.h"
+#include "undoFramework/UndoReactionData.h"
+#include "undoFramework/UndoGlobalQuantityData.h"
+#include "undoFramework/UndoEventData.h"
+#include "undoFramework/UndoEventAssignmentData.h"
+#include "copasiui3window.h"
+#endif
 
 /*
  *  Constructs a CQSpeciesDetail which is a child of 'parent', with the
@@ -61,6 +76,11 @@ CQSpeciesDetail::CQSpeciesDetail(QWidget* parent, const char* name) :
   mpReactionTable->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
   mpReactionTable->horizontalHeader()->hide();
   mpReactionTable->horizontalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+
+#ifdef COPASI_UNDO
+  CopasiUI3Window *  pWindow = dynamic_cast<CopasiUI3Window * >(parent->parent());
+  setUndoStack(pWindow->getUndoStack());
+#endif
 }
 
 CQSpeciesDetail::~CQSpeciesDetail()
@@ -382,6 +402,7 @@ void CQSpeciesDetail::save()
   switch (mFramework)
     {
       case 0:
+
         if (mpMetab->getInitialConcentration() != mInitialConcentration)
           {
             mpMetab->setInitialConcentration(mInitialConcentration);
@@ -391,6 +412,7 @@ void CQSpeciesDetail::save()
         break;
 
       case 1:
+
         if (mpMetab->getInitialValue() != mInitialNumber)
           {
             mpMetab->setInitialValue(mInitialNumber);
@@ -423,6 +445,7 @@ void CQSpeciesDetail::save()
           mChanged = true;
         }
     }
+
   if (mChanged)
     {
       if (mpDataModel)
@@ -469,6 +492,10 @@ void CQSpeciesDetail::loadReactionTable()
 
 void CQSpeciesDetail::slotBtnDelete()
 {
+#ifdef COPASI_UNDO
+  mpUndoStack->push(new DeleteSpecieCommand(this));
+#else
+
   if (mpMetab == NULL) return;
 
   CModel * pModel = const_cast< CModel *>(mpMetab->getModel());
@@ -496,6 +523,8 @@ void CQSpeciesDetail::slotBtnDelete()
       default:
         break;
     }
+
+#endif
 }
 
 void CQSpeciesDetail::copy()
@@ -503,6 +532,7 @@ void CQSpeciesDetail::copy()
   if (mpMetab == NULL) return;
 
   CModel * pModel = NULL;
+
   if (mpMetab) pModel = mpDataModel->getModel();
 
   if (pModel == NULL) return; // for getting compartments and initializing cModelExpObj
@@ -547,10 +577,10 @@ void CQSpeciesDetail::copy()
     {
       // Put species in different compartment (without name modification) by making
       // duplicateMetab think the other compartment was duplicated from the original
-      if(origCompartmentIndex != pDialog->mpSelectionBox->currentIndex())
+      if (origCompartmentIndex != pDialog->mpSelectionBox->currentIndex())
         {
           sourceObjects.addCompartment(mpMetab->getCompartment());
-          origToCopyMapping.add(mpMetab->getCompartment(),*(it + pDialog->mpSelectionBox->currentIndex()));
+          origToCopyMapping.add(mpMetab->getCompartment(), *(it + pDialog->mpSelectionBox->currentIndex()));
         }
 
       sourceObjects.addMetab(mpMetab);
@@ -567,6 +597,9 @@ void CQSpeciesDetail::copy()
 
 void CQSpeciesDetail::slotBtnNew()
 {
+#ifdef COPASI_UNDO
+  mpUndoStack->push(new CreateNewSpecieCommand(this));
+#else
   leave();
 
   assert(CCopasiRootContainer::getDatamodelList()->size() > 0);
@@ -605,6 +638,8 @@ void CQSpeciesDetail::slotBtnNew()
   std::string key = mpMetab->getKey();
   protectedNotify(ListViews::METABOLITE, ListViews::ADD, key);
   mpListView->switchToOtherWidget(C_INVALID_INDEX, key);
+
+#endif
 }
 
 void CQSpeciesDetail::slotCompartmentChanged(int compartment)
@@ -615,6 +650,7 @@ void CQSpeciesDetail::slotCompartmentChanged(int compartment)
 
   if (pModel == NULL)
     return;
+
   QString Compartment = mpComboBoxCompartment->itemText(compartment);
   const CCompartment * pNewCompartment =
     pModel->getCompartments()[TO_UTF8(Compartment)];
@@ -661,6 +697,10 @@ void CQSpeciesDetail::slotInitialTypeChanged(bool useInitialExpression)
 
 void CQSpeciesDetail::slotInitialValueLostFocus()
 {
+#ifdef COPASI_UNDO
+  mpUndoStack->push(new SpecieInitialValueLostFocusCommand(this));
+#else
+
   if (!mpMetab || !mpCurrentCompartment) return;
 
   const CModel * pModel = mpMetab->getModel();
@@ -692,6 +732,8 @@ void CQSpeciesDetail::slotInitialValueLostFocus()
                                 *pModel);
         break;
     }
+
+#endif
 }
 
 void CQSpeciesDetail::slotNameLostFocus()
@@ -728,6 +770,315 @@ void CQSpeciesDetail::slotSwitchToReaction(int row, int /* column */)
 }
 
 void CQSpeciesDetail::slotTypeChanged(int type)
+{
+#ifdef COPASI_UNDO
+
+  if (mItemToType[type] == mpMetab->getStatus())
+    {
+      specieTypeChanged(type);
+    }
+  else
+    {
+      mpUndoStack->push(new SpecieTypeChangeCommand(mItemToType[type], mpMetab->getStatus(), this));
+    }
+
+#else
+
+  switch ((CModelEntity::Status) mItemToType[type])
+    {
+      case CModelEntity::FIXED:
+        mpLblExpression->hide();
+        mpExpressionEMW->hide();
+
+        mpBoxUseInitialExpression->setEnabled(true);
+        slotInitialTypeChanged(mpBoxUseInitialExpression->isChecked());
+        break;
+
+      case CModelEntity::ASSIGNMENT:
+        mpLblExpression->show();
+        mpExpressionEMW->show();
+
+        mpBoxUseInitialExpression->setEnabled(false);
+        slotInitialTypeChanged(false);
+
+        mpExpressionEMW->updateWidget();
+        break;
+
+      case CModelEntity::ODE:
+        mpLblExpression->show();
+        mpExpressionEMW->show();
+
+        mpBoxUseInitialExpression->setEnabled(true);
+        slotInitialTypeChanged(mpBoxUseInitialExpression->isChecked());
+
+        mpExpressionEMW->updateWidget();
+        break;
+
+      case CModelEntity::REACTIONS:
+        mpLblExpression->hide();
+        mpExpressionEMW->hide();
+
+        mpBoxUseInitialExpression->setEnabled(true);
+        slotInitialTypeChanged(mpBoxUseInitialExpression->isChecked());
+        break;
+
+      default:
+        break;
+    }
+
+  // This will update the unit display.
+  setFramework(mFramework);
+#endif
+}
+
+//Undo methods
+#ifdef COPASI_UNDO
+
+void CQSpeciesDetail::createNewSpecie()
+{
+  leave();
+
+  assert(CCopasiRootContainer::getDatamodelList()->size() > 0);
+  CCopasiDataModel* pDataModel = (*CCopasiRootContainer::getDatamodelList())[0];
+  assert(pDataModel != NULL);
+
+  CModel * pModel = pDataModel->getModel();
+
+  if (pModel == NULL)
+    return;
+
+  if (pModel->getCompartments().size() == 0)
+    pModel->createCompartment("compartment");
+
+  std::string name = "species_1";
+  int i = 1;
+
+  while (!(mpMetab = pModel->createMetabolite(name, "", 1.0, CModelEntity::REACTIONS)))
+    {
+      i++;
+      name = "species_";
+      name += TO_UTF8(QString::number(i));
+    }
+
+  switch (mFramework)
+    {
+      case 0:
+        mpMetab->setInitialConcentration(1.0);
+        break;
+
+      case 1:
+        mpMetab->setInitialValue(100.0);
+        break;
+    }
+
+  std::string key = mpMetab->getKey();
+  protectedNotify(ListViews::METABOLITE, ListViews::ADD, key);
+  mpListView->switchToOtherWidget(C_INVALID_INDEX, key);
+}
+
+void CQSpeciesDetail::deleteSpecie()
+{
+  if (mpMetab == NULL) return;
+
+  CModel * pModel = const_cast< CModel *>(mpMetab->getModel());
+
+  if (pModel == NULL) return;
+
+  QMessageBox::StandardButton choice =
+    CQMessageBox::confirmDelete(this, "species",
+                                FROM_UTF8(mpMetab->getObjectName()),
+                                mpMetab->getDeletedObjects());
+
+  switch (choice)
+    {
+      case QMessageBox::Ok:
+      {
+        pModel->removeMetabolite(mKey);
+
+#undef DELETE
+        protectedNotify(ListViews::METABOLITE, ListViews::DELETE, mKey);
+        protectedNotify(ListViews::METABOLITE, ListViews::DELETE, "");//Refresh all as there may be dependencies.
+        //TODO notify about reactions
+        break;
+      }
+
+      default:
+        break;
+    }
+
+  mpListView->switchToOtherWidget(112, "");
+}
+
+void CQSpeciesDetail::deleteSpecie(UndoSpecieData *pSData)
+{
+  assert(CCopasiRootContainer::getDatamodelList()->size() > 0);
+  CCopasiDataModel* pDataModel = (*CCopasiRootContainer::getDatamodelList())[0];
+  assert(pDataModel != NULL);
+
+  CModel * pModel = pDataModel->getModel();
+  assert(pModel != NULL);
+
+  size_t index = pModel->findMetabByName(pSData->getName());
+  CMetab *pSpecie = pModel->getMetabolites()[(int) index];
+  std::string key = pSpecie->getKey();
+
+  pModel->removeMetabolite(key);
+
+#undef DELETE
+  protectedNotify(ListViews::METABOLITE, ListViews::DELETE, key); //mKey);
+  protectedNotify(ListViews::METABOLITE, ListViews::DELETE, "");//Refresh all as there may be dependencies.
+
+  mpListView->switchToOtherWidget(112, "");
+}
+
+void CQSpeciesDetail::addSpecie(UndoSpecieData *pSData)
+{
+  assert(CCopasiRootContainer::getDatamodelList()->size() > 0);
+  CCopasiDataModel* pDataModel = (*CCopasiRootContainer::getDatamodelList())[0];
+  assert(pDataModel != NULL);
+
+  CModel * pModel = pDataModel->getModel();
+  assert(pModel != NULL);
+
+  //reinsert the species
+  CMetab *pSpecie =  pModel->createMetabolite(pSData->getName(), pSData->getCompartment(), 1.0, pSData->getStatus());
+  std::string key = pSpecie->getKey();
+
+  if (pSData->getStatus() != CModelEntity::ASSIGNMENT)
+    {
+      pSpecie->setInitialConcentration(pSData->getIConc());
+    }
+
+  if (pSData->getStatus() == CModelEntity::ODE || pSData->getStatus() == CModelEntity::ASSIGNMENT)
+    {
+      pSpecie->setExpression(pSData->getExpression());
+      pSpecie->getExpressionPtr()->compile();
+    }
+
+  // set initial expression
+  if (pSData->getStatus() != CModelEntity::ASSIGNMENT && pSData->getInitialExpression() != "")
+    {
+      pSpecie->setInitialExpression(pSData->getInitialExpression());
+    }
+
+  protectedNotify(ListViews::METABOLITE, ListViews::ADD, key);
+
+  //restore the reactions the species dependent on
+  QList <UndoReactionData *> *reactionData = pSData->getReactionDependencyObjects();
+
+  if (!reactionData->empty())
+    {
+      QList <UndoReactionData *>::const_iterator j;
+
+      for (j = reactionData->begin(); j != reactionData->end(); ++j)
+        {
+
+          UndoReactionData * rData = *j;
+
+          //need to make sure reaction doesn't exist in the model already
+          if (pModel->getReactions().getIndex(rData->getName()) == C_INVALID_INDEX)
+            {
+              CReaction *pRea =  pModel->createReaction(rData->getName());
+              CChemEqInterface *chem = new CChemEqInterface(pModel);
+              chem->setChemEqString(rData->getRi()->getChemEqString());
+              chem->writeToChemEq(pRea->getChemEq());
+              rData->getRi()->createMetabolites();
+              rData->getRi()->createOtherObjects();
+              rData->getRi()->writeBackToReaction(pRea);
+
+              protectedNotify(ListViews::REACTION, ListViews::ADD, pRea->getKey());
+            }
+        }
+    }
+
+  //reinsert the dependency global quantity
+  QList <UndoGlobalQuantityData *> *pGlobalQuantityData = pSData->getGlobalQuantityDependencyObjects();
+
+  if (!pGlobalQuantityData->empty())
+    {
+      QList <UndoGlobalQuantityData *>::const_iterator g;
+
+      for (g = pGlobalQuantityData->begin(); g != pGlobalQuantityData->end(); ++g)
+        {
+          UndoGlobalQuantityData * gData = *g;
+
+          if (pModel->getModelValues().getIndex(gData->getName()) == C_INVALID_INDEX)
+            {
+              CModelValue *pGlobalQuantity =  pModel->createModelValue(gData->getName()); //, gData->getInitialValue());
+
+              if (pGlobalQuantity)
+                {
+                  pGlobalQuantity->setStatus(gData->getStatus());
+
+                  if (gData->getStatus() != CModelEntity::ASSIGNMENT)
+                    {
+                      pGlobalQuantity->setInitialValue(gData->getInitialValue());
+                    }
+
+                  if (gData->getStatus() != CModelEntity::FIXED)
+                    {
+                      pGlobalQuantity->setExpression(gData->getExpression());
+                      pGlobalQuantity->getExpressionPtr()->compile();
+                    }
+
+                  // set initial expression
+                  if (gData->getStatus() != CModelEntity::ASSIGNMENT)
+                    {
+                      pGlobalQuantity->setInitialExpression(gData->getInitialExpression());
+                      pGlobalQuantity->getInitialExpressionPtr()->compile();
+                    }
+
+                  protectedNotify(ListViews::MODELVALUE, ListViews::ADD, pGlobalQuantity->getKey());
+                }
+            }
+        }
+    }
+
+  //reinsert the dependency events
+  QList <UndoEventData *> *pEventData = pSData->getEventDependencyObjects();
+
+  if (!pEventData->empty())
+    {
+
+      QList <UndoEventData *>::const_iterator ev;
+
+      for (ev = pEventData->begin(); ev != pEventData->end(); ++ev)
+        {
+
+          UndoEventData * eData = *ev;
+
+          CEvent *pEvent =  pModel->createEvent(eData->getName());
+          std::string key = pEvent->getKey();
+
+          //set the expressions
+          pEvent->setTriggerExpression(eData->getTriggerExpression());
+          pEvent->setDelayExpression(eData->getDelayExpression());
+          pEvent->setPriorityExpression(eData->getPriorityExpression());
+
+          QList <UndoEventAssignmentData *> *assignmentData = eData->getEventAssignmentData();
+          QList <UndoEventAssignmentData *>::const_iterator i;
+
+          for (i = assignmentData->begin(); i != assignmentData->end(); ++i)
+            {
+              UndoEventAssignmentData * assignData = *i;
+
+              if (pEvent->getAssignments().getIndex(assignData->getTargetKey()) == C_INVALID_INDEX)
+                {
+                  CEventAssignment *eventAssign = new CEventAssignment(assignData->getTargetKey(), pEvent->getObjectParent());
+                  eventAssign->setExpression(assignData->getExpression());
+                  eventAssign->getExpressionPtr()->compile();
+                  pEvent->getAssignments().add(eventAssign);
+                }
+            }
+
+          protectedNotify(ListViews::EVENT, ListViews::ADD, key);
+        }
+    }
+
+  mpListView->switchToOtherWidget(C_INVALID_INDEX, key);
+}
+
+void CQSpeciesDetail::specieTypeChanged(int type)
 {
   switch ((CModelEntity::Status) mItemToType[type])
     {
@@ -774,3 +1125,93 @@ void CQSpeciesDetail::slotTypeChanged(int type)
   // This will update the unit display.
   setFramework(mFramework);
 }
+
+void CQSpeciesDetail::specieTypeChanged(UndoSpecieData *pSData, int type)
+{
+
+  assert(CCopasiRootContainer::getDatamodelList()->size() > 0);
+  CCopasiDataModel* pDataModel = (*CCopasiRootContainer::getDatamodelList())[0];
+  assert(pDataModel != NULL);
+
+  CModel * pModel = pDataModel->getModel();
+  assert(pModel != NULL);
+
+  //find the species of interest and switch to its widget
+  size_t index = pModel->findMetabByName(pSData->getName());
+  CMetab *pSpecie = pModel->getMetabolites()[(int) index];
+  std::string key = pSpecie->getKey();
+  mpListView->switchToOtherWidget(C_INVALID_INDEX, key);
+
+  //set the species index
+  mpComboBoxType->setCurrentIndex(mpComboBoxType->findText(FROM_UTF8(CModelEntity::StatusName[type])));
+  mpMetab->setStatus((CModelEntity::Status)mItemToType[mpComboBoxType->currentIndex()]);
+  specieTypeChanged(mpComboBoxType->currentIndex());
+}
+
+void CQSpeciesDetail::specieInitialValueLostFocus()
+{
+  if (!mpMetab || !mpCurrentCompartment) return;
+
+  const CModel * pModel = mpMetab->getModel();
+
+  if (pModel == NULL)
+    return;
+
+  switch (mFramework)
+    {
+      case 0:
+
+        if (QString::number(mInitialConcentration, 'g', 10) == mpEditInitialValue->text())
+          return;
+
+        mInitialConcentration = mpEditInitialValue->text().toDouble();
+        mInitialNumber = CMetab::convertToNumber(mInitialConcentration,
+                         *mpCurrentCompartment,
+                         *pModel);
+        break;
+
+      case 1:
+
+        if (QString::number(mInitialNumber, 'g', 10) == mpEditInitialValue->text())
+          return;
+
+        mInitialNumber = mpEditInitialValue->text().toDouble();
+        mInitialConcentration = CMetab::convertToConcentration(mInitialNumber,
+                                *mpCurrentCompartment,
+                                *pModel);
+        break;
+    }
+}
+
+void CQSpeciesDetail::specieInitialValueLostFocus(UndoSpecieData *pSData)
+{
+
+  assert(CCopasiRootContainer::getDatamodelList()->size() > 0);
+  CCopasiDataModel* pDataModel = (*CCopasiRootContainer::getDatamodelList())[0];
+  assert(pDataModel != NULL);
+
+  CModel * pModel = pDataModel->getModel();
+  assert(pModel != NULL);
+
+  //find the species of interest and switch to its widget
+  size_t index = pModel->findMetabByName(pSData->getName());
+  CMetab *pSpecie = pModel->getMetabolites()[(int) index];
+  std::string key = pSpecie->getKey();
+  mpListView->switchToOtherWidget(C_INVALID_INDEX, key);
+
+  switch (mFramework)
+    {
+      case 0:
+        mInitialConcentration = pSData->getIConc();
+        pSData->setIConc(mpEditInitialValue->text().toDouble());
+        mpEditInitialValue->setText(QString::number(mInitialConcentration, 'g', 10));
+        break;
+
+      case 1:
+        mInitialNumber = pSData->getINumber();
+        pSData->setINumber(mpEditInitialValue->text().toDouble());
+        mpEditInitialValue->setText(QString::number(mInitialNumber, 'g', 10));
+        break;
+    }
+}
+#endif

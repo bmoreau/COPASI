@@ -493,6 +493,11 @@ private:
    * A pointer to the value of the CCopasiParameter holding Create Parameter Sets
    */
   bool * mpCreateParameterSets;
+
+  /**
+   * The original value of the trajectory update flag
+   */
+  bool mTrajectoryUpdate;
 };
 
 #endif  // COPASI_CFitProblem

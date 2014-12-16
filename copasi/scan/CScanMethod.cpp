@@ -1,4 +1,4 @@
-// Copyright (C) 2010 - 2013 by Pedro Mendes, Virginia Tech Intellectual
+// Copyright (C) 2010 - 2014 by Pedro Mendes, Virginia Tech Intellectual
 // Properties, Inc., University of Heidelberg, and The University
 // of Manchester.
 // All rights reserved.
@@ -275,7 +275,7 @@ CScanItemRandom::CScanItemRandom(CCopasiParameterGroup* si, CRandom* rg,
   mMin = * si->getValue("Minimum").pDOUBLE;
   mMax = * si->getValue("Maximum").pDOUBLE;
 
-  if (mLog)
+  if (mLog && mRandomType == 0)
     {
       mMin = log(mMin);
       mMax = log(mMax);
@@ -298,7 +298,7 @@ void CScanItemRandom::step()
 
       switch (mRandomType)
         {
-          case 0:             //uniform
+          case 0: // uniform
             Value = mMin + mRg->getRandomCC() * mFaktor;
 
             if (mLog)
@@ -306,7 +306,7 @@ void CScanItemRandom::step()
 
             break;
 
-          case 1:             //normal
+          case 1: // normal
             tmpF = mRg->getRandomNormal01();
             Value = mMin + tmpF * mMax;
 
@@ -315,10 +315,20 @@ void CScanItemRandom::step()
 
             break;
 
-          case 2:             //poisson
+          case 2: // poisson
+
             if (mMin < 0)
               CCopasiMessage(CCopasiMessage::WARNING, "Invalid ScanItem: Requested Poisson random variable for negative argument: %lf", mMin);
+
             Value = mRg->getRandomPoisson(mMin);
+
+            break;
+
+          case 3: // gamma
+            Value = mRg->getRandomGamma(mMin, mMax);
+
+            if (mLog)
+              Value = exp(Value);
 
             break;
         }

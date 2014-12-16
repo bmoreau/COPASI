@@ -1,4 +1,4 @@
-// Copyright (C) 2010 - 2013 by Pedro Mendes, Virginia Tech Intellectual
+// Copyright (C) 2010 - 2014 by Pedro Mendes, Virginia Tech Intellectual
 // Properties, Inc., University of Heidelberg, and The University
 // of Manchester.
 // All rights reserved.
@@ -123,6 +123,30 @@ CStochDirectMethod::CStochDirectMethod(const CStochDirectMethod & src,
 CStochDirectMethod::~CStochDirectMethod()
 {
   pdelete(mpRandomGenerator);
+
+  if (mpRootNew)
+    {
+      delete [] mpRootNew;
+      mpRootNew = NULL;
+    }
+
+  if (mpRootOld)
+    {
+      delete [] mpRootOld;
+      mpRootOld = NULL;
+    }
+
+  if (mpRootValueNew)
+    {
+      delete mpRootValueNew;
+      mpRootValueNew = NULL;
+    }
+
+  if (mpRootValueOld)
+    {
+      delete mpRootValueOld;
+      mpRootValueOld = NULL;
+    }
 }
 
 void CStochDirectMethod::initializeParameter()
@@ -142,14 +166,27 @@ CTrajectoryMethod::Status CStochDirectMethod::step(const double & deltaT)
 {
   // do several steps
   C_FLOAT64 Time = mpCurrentState->getTime();
-  C_FLOAT64 EndTime = Time + deltaT;
+
+  if (Time == mTimeRecord)
+    {
+      mTimeRecord = Time + deltaT;
+    }
+
+  C_FLOAT64 EndTime = mTimeRecord;
 
   size_t Steps = 0;
 
   while (Time < EndTime)
     {
-      mMethodState.setTime(Time);
       Time += doSingleStep(Time, EndTime);
+      mMethodState.setTime(Time);
+
+      if (mNumRoot > 0 && checkRoots())
+        {
+          *mpCurrentState = mMethodState;
+          mpCurrentState->setTime(Time);
+          return ROOT;
+        }
 
       if (++Steps > mMaxSteps)
         {
@@ -344,6 +381,37 @@ void CStochDirectMethod::start(const CState * initialState)
   mNextReactionTime = mpCurrentState->getTime();
   mNextReactionIndex = C_INVALID_INDEX;
 
+  //========Initialize Roots Related Arguments========
+  mTimeRecord = 0.0;
+  mNumRoot = mpModel->getNumRoots();
+
+  if (mNumRoot > 0)
+    {
+      mRoots.resize(mNumRoot);
+      C_INT32 *it = (C_INT32*)mRoots.array();
+      const C_INT32 *const itEnd = it + mNumRoot;
+
+      for (; it != itEnd; it++)
+        *it = 0;
+
+      mpRootNew = new C_FLOAT64[mNumRoot];
+      mpRootOld = new C_FLOAT64[mNumRoot];
+      mpRootValueNew = new CVectorCore< C_FLOAT64 >(mNumRoot, mpRootNew);
+      mpRootValueOld = new CVectorCore< C_FLOAT64 >(mNumRoot, mpRootOld);
+
+      //Calculate roots at initial time
+      mpModel->evaluateRoots(*mpRootValueOld, true);
+    }
+  else
+    {
+      mpRootNew      = NULL;
+      mpRootOld      = NULL;
+      mpRootValueOld = NULL;
+      mpRootValueNew = NULL;
+
+      mRoots.resize(0);
+    }
+
   return;
 }
 
@@ -417,12 +485,13 @@ bool CStochDirectMethod::isValidProblem(const CCopasiProblem * pProblem)
     }
 
   //events are not supported at the moment
-  if (pTP->getModel()->getEvents().size() > 0)
+  /*
+    if (pTP->getModel()->getEvents().size() > 0)
     {
-      CCopasiMessage(CCopasiMessage::ERROR, MCTrajectoryMethod + 23);
-      return false;
+    CCopasiMessage(CCopasiMessage::ERROR, MCTrajectoryMethod + 23);
+    return false;
     }
-
+  */
   return true;
 }
 
@@ -592,4 +661,73 @@ void CStochDirectMethod::calculateAmu(const size_t & index)
     }
 
   return;
+}
+
+/**
+ * Check whether a root has been found
+ */
+bool CStochDirectMethod::checkRoots()
+{
+  bool hasRoots = false;
+  // calculate roots
+  mpModel->setState(mMethodState);
+  mpModel->updateSimulatedValues(false); //for assignments
+  mpModel->evaluateRoots(*mpRootValueNew, true);
+
+  C_FLOAT64 *pRTOld = mpRootOld;
+  C_FLOAT64 *pRTNew = mpRootNew;
+  C_INT32  *pRT    = (C_INT32*)mRoots.array();
+
+  for (size_t i = 0; i < mNumRoot; pRTOld++, pRTNew++, pRT++, i++)
+    {
+      if ((*pRTNew) == 0 || (*pRTOld) * (*pRTNew) < 0.0)
+        {
+          hasRoots = true;
+          *pRT = 1;
+        }
+      else
+        *pRT = 0;
+    }
+
+  return hasRoots;
+}
+
+/**
+ * Update model state after one events happened
+ */
+void CStochDirectMethod::stateChanged()
+{
+    mMaxStepsReached = false;
+    mMethodState = *mpCurrentState;
+    const CStateTemplate & StateTemplate = mpModel->getStateTemplate();
+    CModelEntity *const* ppEntity  = StateTemplate.beginIndependent();
+    CModelEntity *const* endEntity = StateTemplate.endFixed();
+    C_FLOAT64 * pValue = mMethodState.beginIndependent();
+    for (; ppEntity != endEntity; ++ppEntity, ++pValue)
+    {
+      if (dynamic_cast< const CMetab * >(*ppEntity) != NULL)
+        *pValue = floor(*pValue + 0.5);
+    }
+
+    mpModel->setState(mMethodState);
+    mpModel->updateSimulatedValues(false); //for assignments
+
+    // recalculate amu;
+    size_t i;
+    for (i = 0; i < mNumReactions; i++)
+        calculateAmu(i);
+
+    // calculate the total propensity
+    C_FLOAT64 * pAmu   = mAmu.array();
+    C_FLOAT64 * endAmu = pAmu + mNumReactions;
+
+    mA0 = 0.0;
+
+    for (; pAmu != endAmu; ++pAmu)
+        mA0 += *pAmu;
+
+    mNextReactionIndex = C_INVALID_INDEX;
+   
+    // recalculate roots
+    mpModel->evaluateRoots(*mpRootValueOld, true);
 }
