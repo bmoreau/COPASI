@@ -1,4 +1,4 @@
-// Copyright (C) 2010 - 2013 by Pedro Mendes, Virginia Tech Intellectual
+// Copyright (C) 2010 - 2015 by Pedro Mendes, Virginia Tech Intellectual
 // Properties, Inc., University of Heidelberg, and The University
 // of Manchester.
 // All rights reserved.
@@ -266,10 +266,9 @@ public:
    * @return const CCopasiTask::Type & experimentType
    */
   const CCopasiTask::Type & getExperimentType() const;
-  
-  void setStartInSteadyState(bool flag);
-  bool getStartInSteadyState() const;
 
+  void setNormalizeWeightsPerExperiment(bool flag);
+  bool getNormalizeWeightsPerExperiment() const;
   /**
    * Retrieve the time data of the experiment.
    * @return const CVector< C_FLOAT64 > & timeData
@@ -576,10 +575,9 @@ private:
   CCopasiTask::Type * mpTaskType;
 
   /**
-   * Indicates whether a time course is supposed to start in a steady state
-   * realized as a CCopasiParameter 
+   * Indicates whether the weights of this experiment should be normalized to 1
    */
-  bool* mpStartInSteadyState;
+  bool* mpNormalizeWeightsPerExperiment;
 
   /**
    * This is realized as a CCopasiParameter type STRING

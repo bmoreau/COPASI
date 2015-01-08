@@ -1,14 +1,11 @@
-// Begin CVS Header
-//   $Source: /Volumes/Home/Users/shoops/cvs/copasi_dev/copasi/steadystate/CEigen.h,v $
-//   $Revision: 1.32 $
-//   $Name:  $
-//   $Author: shoops $
-//   $Date: 2011/11/29 14:22:31 $
-// End CVS Header
-
-// Copyright (C) 2011 by Pedro Mendes, Virginia Tech Intellectual
+// Copyright (C) 2010 - 2015 by Pedro Mendes, Virginia Tech Intellectual
 // Properties, Inc., University of Heidelberg, and The University
 // of Manchester.
+// All rights reserved.
+
+// Copyright (C) 2008 - 2009 by Pedro Mendes, Virginia Tech Intellectual
+// Properties, Inc., EML Research, gGmbH, University of Heidelberg,
+// and The University of Manchester.
 // All rights reserved.
 
 // Copyright (C) 2001 - 2007 by Pedro Mendes, Virginia Tech Intellectual
@@ -35,6 +32,29 @@
 #include "utilities/CMatrix.h"
 #include "utilities/CVector.h"
 #include "report/CCopasiContainer.h"
+
+#ifdef COPASI_OVERWRITE_LOGICAL_AS_INT
+typedef  C_INT logical;
+#elif COPASI_OVERWRITE_LOGICAL_AS_LONG
+typedef  long logical;
+#else 
+# ifndef HAVE_APPLE
+#   include "lapack/blaswrap.h"
+#   include "lapack/lapackwrap.h"
+# else
+// need to include definition directly, so that
+// MacTypes.h is not included which would break
+// the build
+#   ifdef HAVE_F2C_H
+#     include <f2c.h>
+#   else
+#     include "lapack/f2c.h"
+#   endif
+#   undef abs
+#   undef max
+#   undef min
+# endif // HAVE_APPLE
+#endif // COPASI_OVERWRITE_LOGICAL_AS_INT
 
 class CEigen: public CCopasiContainer
 {
@@ -138,7 +158,6 @@ private:
    */
   C_FLOAT64 mBifurcationIndicator_Fold_BDT;
 
-
   /**
      * The resolution of needed for the stability analysis
      */
@@ -235,7 +254,7 @@ private:
    * #14: (workspace) Logical array, dimension (N)
    * Not referenced if mSort = 'N'
    */
-  C_INT * mpBWork;
+  logical * mpBWork;
 
   /**
    * #15: (output) an integer

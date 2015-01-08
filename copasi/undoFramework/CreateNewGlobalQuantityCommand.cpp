@@ -21,6 +21,8 @@ CreateNewGlobalQuantityCommand::CreateNewGlobalQuantityCommand(CQModelValue *pMo
   mpModelValue = pModelValue;
   mpGlobalQuantityData = new UndoGlobalQuantityData();
   this->setText(createNewGlobalQuantityText());
+  mType = GLOBALQUANTITYCREATE;
+  setEntityType("Global Quantity");
 }
 void CreateNewGlobalQuantityCommand::redo()
 {
@@ -47,11 +49,17 @@ void CreateNewGlobalQuantityCommand::redo()
     {
       mpGlobalQuantityData->setInitialExpression(mpModelValue->mpModelValue->getInitialExpression());
     }
+
+  setUndoState(true);
+  setAction("Create");
+  setName(sName);
 }
 
 void CreateNewGlobalQuantityCommand::undo()
 {
   mpModelValue->deleteGlobalQuantity(mpGlobalQuantityData);
+  setUndoState(false);
+  setAction("Delete");
 }
 
 QString CreateNewGlobalQuantityCommand::createNewGlobalQuantityText() const
@@ -59,6 +67,11 @@ QString CreateNewGlobalQuantityCommand::createNewGlobalQuantityText() const
   std::string myEntityName(": Create New Global Quantity ");
   char* entityName = (char*)myEntityName.c_str();
   return QObject::tr(entityName);
+}
+
+UndoData *CreateNewGlobalQuantityCommand::getUndoData() const
+{
+  return mpGlobalQuantityData;
 }
 
 CreateNewGlobalQuantityCommand::~CreateNewGlobalQuantityCommand()
